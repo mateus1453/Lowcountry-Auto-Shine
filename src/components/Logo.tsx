@@ -29,7 +29,7 @@ const Logo = ({ className = "w-12 h-12" }: { className?: string }) => {
 
   return (
     <img 
-      src="/logo-1.png" 
+      src="/logo-no-border.png" 
       alt="Lowcountry Auto Shine Logo" 
       className={`${className} object-contain`}
       onError={() => setError(true)}
