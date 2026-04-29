@@ -1,14 +1,47 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Phone, MessageSquare, MapPin, Send, CheckCircle2, Truck, Car, Gauge, Sparkles } from 'lucide-react';
+import { Phone, MessageSquare, MapPin, Send, CheckCircle2, Truck, Car, Gauge, Sparkles, Loader2 } from 'lucide-react';
 
 const Contact = () => {
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setSubmitted(true);
-    // In a real app, logic would go here
+    setLoading(true);
+    setError("");
+    
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+    
+    // Add _captcha=false to disable visual captcha prompt if possible
+    formData.append("_captcha", "false");
+    
+    // Create custom subject line
+    const name = formData.get("name");
+    const serviceType = formData.get("service_needed");
+    formData.append("_subject", `New Quote Request from ${name} (${serviceType})`);
+    
+    try {
+      const response = await fetch("https://formsubmit.co/ajax/Lowcountryautoshine@gmail.com", {
+        method: "POST",
+        headers: { 
+            "Accept": "application/json"
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        setSubmitted(true);
+      } else {
+        setError("Error sending message. Please call or text us instead.");
+      }
+    } catch (err) {
+      setError("Network error. Please call or text us instead.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -117,13 +150,21 @@ const Contact = () => {
                     <h3 className="text-3xl font-display font-bold text-neutral-900 mb-2">Request Your Quote</h3>
                     <p className="text-neutral-500 mb-10">Fill out this quick form and we'll send you an estimate by text or email.</p>
                     
+                    
                     <form onSubmit={handleSubmit} className="space-y-6">
+                      {error && (
+                        <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-bold border border-red-100">
+                          {error}
+                        </div>
+                      )}
+                      
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-sm font-bold text-neutral-700 uppercase tracking-wider ml-1">Your Name</label>
                           <input 
                             required 
                             type="text" 
+                            name="name"
                             placeholder="John Doe" 
                             className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl p-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                           />
@@ -133,6 +174,7 @@ const Contact = () => {
                           <input 
                             required 
                             type="tel" 
+                            name="phone"
                             placeholder="(843) 900-1754" 
                             className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl p-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                           />
@@ -183,12 +225,12 @@ const Contact = () => {
 
                       <div className="space-y-2">
                         <label className="text-sm font-bold text-neutral-700 uppercase tracking-wider ml-1">Services Needed</label>
-                        <select className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl p-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all appearance-none cursor-pointer">
-                          <option>Full Detail (Most Popular)</option>
-                          <option>Premium Exterior Wash</option>
-                          <option>Interior Deep Clean</option>
-                          <option>Semi-Truck Service</option>
-                          <option>Commercial Fleet Quote</option>
+                        <select name="service_needed" className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl p-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all appearance-none cursor-pointer">
+                          <option value="Full Detail">Full Detail (Most Popular)</option>
+                          <option value="Premium Exterior Wash">Premium Exterior Wash</option>
+                          <option value="Interior Deep Clean">Interior Deep Clean</option>
+                          <option value="Semi-Truck Service">Semi-Truck Service</option>
+                          <option value="Commercial Fleet Quote">Commercial Fleet Quote</option>
                         </select>
                       </div>
 
@@ -196,16 +238,25 @@ const Contact = () => {
                         <label className="text-sm font-bold text-neutral-700 uppercase tracking-wider ml-1">Location Preferred</label>
                         <input 
                           type="text" 
+                          name="location"
                           placeholder="Summerville, North Charleston, etc." 
                           className="w-full bg-neutral-50 border border-neutral-200 rounded-2xl p-4 focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
                         />
                       </div>
 
+                      {/* Honeypot field to prevent spam */}
+                      <input type="text" name="_honey" style={{ display: 'none' }} />
+
                       <button 
                         type="submit" 
-                        className="w-full bg-primary text-white py-5 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl shadow-primary/30 hover:bg-primary-dark transition-all hover:scale-[1.01] active:scale-[0.99] mt-4"
+                        disabled={loading}
+                        className="w-full bg-primary text-white py-5 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-xl shadow-primary/30 hover:bg-primary-dark transition-all hover:scale-[1.01] active:scale-[0.99] mt-4 disabled:opacity-70 disabled:hover:scale-100"
                       >
-                        Request My Quote <Send size={20} />
+                        {loading ? (
+                          <>Sending Request... <Loader2 size={20} className="animate-spin" /></>
+                        ) : (
+                          <>Request My Quote <Send size={20} /></>
+                        )}
                       </button>
                       <p className="text-[10px] text-center text-neutral-400 mt-4 px-8 uppercase tracking-widest leading-relaxed">
                         By submitting, you agree to receive a text or call back from Lowcountry Auto Shine. No spam, ever.
